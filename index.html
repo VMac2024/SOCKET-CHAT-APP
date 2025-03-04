@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width,
+initial-scale=1.0"
+    />
+
+    <title>Socket Chat App</title>
+    <style>
+      body {
+        margin: 0;
+        padding-bottom: 3rem;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      #form {
+        background: rgba(0, 0, 0, 0.15);
+        padding: 0.25rem;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        height: 3rem;
+        box-sizing: border-box;
+        backdrop-filter: blur(10px);
+      }
+      #input {
+        border: none;
+        padding: 0 1rem;
+        flex-grow: 1;
+        border-radius: 2rem;
+        margin: 0.25rem;
+      }
+      #input:focus {
+        outline: none;
+      }
+      #form > button {
+        background: #333;
+        border: none;
+        padding: 0 1rem;
+        margin: 0.25rem;
+        border-radius: 3px;
+        outline: none;
+        color: #fff;
+      }
+
+      #messages {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+      }
+      #messages > li {
+        padding: 0.5rem 1rem;
+      }
+      #messages > li:nth-child(odd) {
+        background: #efefef;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h2>Welcome to Socket Chat</h2>
+
+    <ul id="messages"></ul>
+    <form id="form" action=""><input id="input" autocomplete="off" /><button>Send</button></form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <!--This is the text which makes it the socket server. Allows us to make the socket below-->
+    <script>
+      let socket = io();
+      socket.on("connection", (msg) => console.log(msg)); //listens for the "io.on" event in the index.js, and when it receives that connection, it will log teh message to the console.
+
+      const form = document.getElementById("form");
+      const input = document.getElementById("input");
+      const messages = document.getElementById("messages");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault(); // stop the default form, and allow the output for the chat.
+
+        if (input.value) {
+          const item = document.createElement("li");
+          item.textContent = `you: ${input.value}`;
+          messages.appendChild(item);
+
+          socket.emit("chat message", input.value);
+
+          input.value = "";
+        }
+      });
+
+      socket.on("chat message", (msg) => {
+        //new event listener - when it receives the new chat, it will run this function.
+        //the varible holds the message that the user has put into the form.
+        const item = document.createElement("li"); //It will create a new list item,
+        item.textContent = msg; //set the context,
+        messages.appendChild(item); //adn append it to our list of messages.
+        window.scrollTo(0, document.body.scrollHeight); //Will scroll down to that element (down to the most recent one.)
+      });
+
+      socket.on("connection", (msg) => {
+        //note - need to have the "connection" name match up with the "io.emit" one in index.js in order for this to appear.
+        const item = document.createElement("li");
+        item.textContent = msg;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+
+      socket.on("disconnected", (msg) => {
+        //note - "disconnect" was a protected name, therefore had to use "disconnected". Lintked through to the index.js page in similar form.
+        //note - need to have the "disconnect" name match up with the "io.emit" one in index.js in order for this to appear.
+        const item = document.createElement("li");
+        item.textContent = msg;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+      });
+    </script>
+  </body>
+</html>
